@@ -543,6 +543,65 @@ Exposer l'application de manière sécurisée via HTTPS avec gestion automatique
 - [ ] Routage correct : `/` → frontend, `/api` → backend
 - [ ] Le certificat est visible dans les secrets du namespace
 
+### Bonus : Intégration Vault PKI (Optionnel - Point bonus)
+
+**Prérequis** : Vous devez avoir réussi à déployer Vault (Phase 3) pour pouvoir réaliser ce bonus.
+
+Au lieu d'utiliser cert-manager avec un Issuer self-signed, vous pouvez utiliser le **PKI Secrets Engine** de Vault pour générer les certificats TLS. Cela permet de centraliser la gestion des secrets (base de données + certificats) dans Vault.
+
+#### Objectif du bonus
+
+Utiliser Vault comme source d'autorité pour les certificats TLS au lieu de cert-manager, en créant un **External Issuer** dans cert-manager qui pointe vers Vault.
+
+#### Travaux demandés
+
+1. **Configurer le PKI Secrets Engine dans Vault**
+   - Activer le PKI Secrets Engine dans Vault
+   - Générer une CA (Certificate Authority) racine ou intermédiaire
+   - Configurer les rôles PKI pour générer des certificats pour `app.localhost`
+   - **Note** : Consultez la documentation Vault sur le [PKI Secrets Engine](https://developer.hashicorp.com/vault/docs/secrets/pki)
+
+2. **Créer un External Issuer dans cert-manager**
+   - Créer un **ClusterIssuer** ou **Issuer** de type `vault` dans cert-manager
+   - Configurer la connexion à Vault (URL, authentification)
+   - Spécifier le chemin du PKI Secrets Engine dans Vault
+   - **Note** : cert-manager doit pouvoir s'authentifier auprès de Vault (token, approle, etc.)
+
+3. **Créer un Certificate utilisant l'External Issuer Vault**
+   - Créer un **Certificate** qui référence l'Issuer Vault au lieu de l'Issuer self-signed
+   - Vérifier que cert-manager génère le Secret TLS en utilisant Vault comme source
+   - Vérifier que le certificat est valide et fonctionne avec l'Ingress
+
+4. **Vérifier l'intégration**
+   - Vérifier que le certificat est généré par Vault (via `vault list pki/certs` ou équivalent)
+   - Vérifier que le Secret TLS est créé dans Kubernetes
+   - Vérifier que HTTPS fonctionne avec le certificat généré par Vault
+   - Vérifier les logs d'audit de Vault pour voir la génération du certificat
+
+#### Avantages de cette approche
+
+- **Centralisation** : Tous les secrets (DB + certificats) gérés dans Vault
+- **Audit trail unifié** : Tous les secrets tracés dans les logs Vault
+- **Rotation automatique** : Vault peut gérer la rotation des certificats
+- **Cohérence** : Utilisation d'un seul outil pour tous les secrets
+
+#### Notes importantes
+
+- Cette approche est plus complexe que l'Issuer self-signed standard
+- Vous devez configurer l'authentification entre cert-manager et Vault
+- En production, on utiliserait généralement cert-manager avec Let's Encrypt pour les certificats publics
+- L'intégration Vault PKI est plus adaptée pour les certificats internes ou les environnements avec des exigences de sécurité strictes
+
+#### ✅ Validation attendue (Bonus)
+
+- [ ] PKI Secrets Engine activé et configuré dans Vault
+- [ ] CA générée dans Vault
+- [ ] External Issuer créé dans cert-manager pointant vers Vault
+- [ ] Certificate créé utilisant l'External Issuer Vault
+- [ ] Secret TLS généré par cert-manager via Vault
+- [ ] HTTPS fonctionnel avec le certificat généré par Vault
+- [ ] Certificat visible dans Vault (via `vault list` ou l'UI)
+
 ### 🔗 Ressources utiles
 
 - [Documentation cert-manager](https://cert-manager.io/docs/)
