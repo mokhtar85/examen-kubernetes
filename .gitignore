@@ -40,3 +40,4 @@ Thumbs.db
 # Kubernetes manifests (générés par les élèves)
 kubernetes/
 
+tmp/
